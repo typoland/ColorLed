@@ -35,7 +35,8 @@ class GPIOHandler {
         switch runEsp({
             gpio_isr_handler_add(
                 gpio_num_t(gpioNumber), 
-                gpio_isr_handler, selfPointer)
+                gpio_isr_handler, 
+                selfPointer)
         }) 
         {
         case .success: break

@@ -66,7 +66,6 @@ target_sources(${COMPONENT_LIB}
     ADConverter.swift
     ProtocolOnOff.swift
     RGBLed.swift
-    BootButton.swift
     GPIOHandler.swift
     RGBColor.swift
 )
