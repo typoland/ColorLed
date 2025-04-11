@@ -67,6 +67,7 @@ target_sources(${COMPONENT_LIB}
     ProtocolOnOff.swift
     RGBLed.swift
     GPIOHandler.swift
+    GPIOOutput.swift
     RGBColor.swift
 )
 

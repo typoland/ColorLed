@@ -15,7 +15,7 @@
 
 
 
-var colorLed: RGBLed?
+
 
 let rgbLedChannels = RGBLed.Channels(
     red: RGBLed.Channels.Settings(
@@ -29,16 +29,27 @@ let rgbLedChannels = RGBLed.Channels(
         ledcGPIO: 24),
 )
 
-var button: GPIOHandler?
-let buttonGPIO: Int32 = 5
+let buttonGPIO:   Int32 = 5
+var button:        GPIOHandler!
+var knob:          ADConverter!
+var knobTimer:     Timer!
 
-let potentiometerChannel = ADC_CHANNEL_0
-var potentiometer: ADConverter = try! ADConverter(channel: ADC_CHANNEL_0)
-var potentiometerTimer: Timer?
-
+let ledRedGPIO:   Int32 = 10
+let ledGreenGPIO: Int32 = 11
+let ledBlueGPIO:  Int32 = 12
+let knobChannel = ADC_CHANNEL_0 // GPIO1
 
 @_cdecl("app_main")
 func main() {
+    
+    var redOutput:     GPIOOutput// = try! .init(gpio: ledRedGPIO)
+    var greenOutput: GPIOOutput// = try! .init(gpio: ledGreenGPIO)
+    var blueOutput: GPIOOutput// = try! .init(gpio: ledBlueGPIO)
+    
+    var colorLed: RGBLed
+    
+    
+    
     enum ActiveChannel: String {
         case red
         case green
@@ -51,69 +62,46 @@ func main() {
             }
         }
     }
-
     
-
-    
-    //var ledIsOn: Bool = true
-    
-    var activeChannel: ActiveChannel = .red
-    var currentColor: RGBColor = .init(red: 10, green: 10, blue: 10)
-    //LED
-   /*
-    print ("start app")
-    let led = LedStrip(gpioPin: 8, maxLeds: 1)
-    
-    */
-    //LED Timer
-    /*
-    do {
-        ledTimer = try Timer(name: "Led Timer") {
-            led.setPixel(index: 0,
-                         color: ledIsOn ? .lightWhite : .off)
-            led.refresh()
-            ledIsOn.toggle()  // Toggle the boolean value
-        }
-    } catch {
-        print ("Led strip initialization failed: \(error)")
+    var activeChannel: ActiveChannel = .red {
+        didSet { turnOn(channel: activeChannel) }
     }
-     */
-    //ZIGBEE
-    /*
-     print("🚀 Zigbee app starting...")
-     
-     var platformCfg = esp_zb_platform_config_t()
-     esp_zb_platform_config(&platformCfg)
-     
-     var zbCfg = esp_zb_cfg_t()
-     zbCfg.esp_zb_role = ESP_ZB_DEVICE_TYPE_ROUTER
-     esp_zb_init(&zbCfg)
-     
-     // Start Zigbee task as a FreeRTOS thread
-     _ = xTaskCreate(zigbeeTask, "ZB Task", 4096, nil, 5, nil)
-     
-     */
+    var currentColor: RGBColor = .init(red: 25, green: 30, blue: 5)
+
+    /* Leds */
     
-    //ColorLed 
+    do {
+        redOutput = try GPIOOutput(gpio: ledRedGPIO)
+        blueOutput = try GPIOOutput(gpio: ledBlueGPIO)
+        greenOutput = try GPIOOutput(gpio: ledGreenGPIO)
+    } catch { fatalError("Leds initialization failed \(error)") }
+    
+    /* ColorLed */ 
     
     do {  colorLed = try RGBLed(channels: rgbLedChannels) } 
-    catch {  print("Led initialization failed \(error)") }
-    colorLed?.setColor(currentColor)
-  
-    do { button = try GPIOHandler(gpio: buttonGPIO) 
-        { activeChannel = activeChannel.next }
-    } catch {  print("Button initialization failed \(error)") }
-
-
+    catch {  fatalError("Led initialization failed \(error)") }
+    colorLed.setColor(currentColor)
     
-    //Potentiometer
+    /* Button */
     
-    let potentiometerTreshold: UInt64 = 1
+    do { 
+        button = try GPIOHandler(gpio: buttonGPIO) 
+        {  activeChannel = activeChannel.next }
+    } catch { fatalError("Button initialization failed \(error)") }
     
-    do { potentiometerTimer = try Timer(name: "Check Potentiometer Value") 
-        { let before = potentiometer.lastRead
-            let value = potentiometer.valueInterpolated(in: 0...255)
-            if abs(value - before) > potentiometerTreshold,
+    /* Knob */
+    
+    do { knob = try ADConverter(channel: knobChannel) }
+    catch { fatalError("Knob initialization failed: \(error)") }
+    
+    let knobTreshold: UInt64 = 1
+    
+    /* Knob timer */
+    
+    do { knobTimer = try Timer(name: "Check Potentiometer Value") 
+        { let before = knob.lastRead
+            let value = knob.valueInterpolated(in: 0...255)
+            if abs(value - before) > knobTreshold,
                let value = UInt8(exactly: value) {
                 switch activeChannel {
                 case .red: 
@@ -123,17 +111,55 @@ func main() {
                 case .blue:
                     currentColor.blue = value
                 }
-                colorLed?.setColor(currentColor)
+                colorLed.setColor(currentColor)
             }
         }
     } catch {
-        print("Potentialmeter initialization failed: \(error)")
-    }
-
-    //ledTimer?.start(intervalMs: 1511)
-    potentiometerTimer?.start(intervalMs: 50)
+        fatalError("Knob initialization failed: \(error)")
+    }   
+    knobTimer.start(intervalMs: 50)
     
-    print ("initialization complete")
+    //print ("initialization complete")
+    
+    //LED
+    /*
+     print ("start app")
+     let led = LedStrip(gpioPin: 8, maxLeds: 1)
+     
+     */
+    //LED Timer
+    
+    //    do {
+    //        ledTimer = try Timer(name: "Led Timer") {
+    //            led.setPixel(index: 0,
+    //                         color: ledIsOn ? .lightWhite : .off)
+    //            led.refresh()
+    //            ledIsOn.toggle()  // Toggle the boolean value
+    //        }
+    //    } catch {
+    //        print ("Led strip initialization failed: \(error)")
+    //    }
+    //ledTimer?.start(intervalMs: 1511)
+    
+    
+    func turnOn(channel: ActiveChannel) {
+        do  {
+            switch activeChannel {
+            case .red: 
+                try redOutput.on()
+                try greenOutput.off()
+                try blueOutput.off()
+            case .green:
+                try redOutput.off()
+                try greenOutput.on()
+                try blueOutput.off()
+            case .blue: 
+                try  redOutput.off()
+                try  greenOutput.off()
+                try  blueOutput.on()
+            }  
+        } catch { fatalError("Error setting GPIO levels: \(error)") } 
+    }
 }
 
 public enum ESPError {
