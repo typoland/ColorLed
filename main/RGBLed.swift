@@ -24,16 +24,18 @@ struct RGBLed {
         try setup.set()
         
         // Configure the LEDC channels
-        try channels.red.set(with: setup)
         try channels.green.set(with: setup)
+        try channels.red.set(with: setup)
+       
         try channels.blue.set(with: setup)
     }
     
     func setColor(red: UInt8, green: UInt8, blue: UInt8) {
-        setDuty(channel: channels.red.ledcChannel, duty: red)
         setDuty(channel: channels.green.ledcChannel, duty: green)
-        setDuty(channel: channels.blue.ledcChannel, duty: blue)
+        setDuty(channel: channels.blue.ledcChannel,  duty: blue)
+        setDuty(channel: channels.red.ledcChannel,   duty: red)
     }
+    
     func setColor(_ color: RGBColor) {
         setColor(red: color.red, green: color.green, blue: color.blue)
     }

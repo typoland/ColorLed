@@ -69,6 +69,7 @@ target_sources(${COMPONENT_LIB}
     GPIOHandler.swift
     GPIOOutput.swift
     RGBColor.swift
+    ESPHelpers.swift
 )
 
 add_custom_command(
