@@ -1,9 +1,4 @@
-//
-//  ESPHelpers.swift
-//  
-//
-//  Created by Łukasz Dziedzic on 12/04/2025.
-//
+
 public enum ESPError {
     case failure(String)
     case success

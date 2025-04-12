@@ -1,10 +1,6 @@
-//
-//  GPIOOutput.swift
-//  
-//
-//  Created by Łukasz Dziedzic on 11/04/2025.
-//
+
 class GPIOOutput {
+    
     let gpioNumber: Int32
     
     enum Error: Swift.Error {
@@ -30,20 +26,18 @@ class GPIOOutput {
         }
     }
     
-    func set(level: UInt32) throws (GPIOOutput.Error) {
-        switch runEsp({ gpio_set_level(gpio_num_t(gpioNumber), level) }) {
+    func set(_ level: Bool) throws (GPIOOutput.Error) {
+        switch runEsp({ gpio_set_level(gpio_num_t(gpioNumber), level ? 1 : 0) }) {
         case .success: break
         case .failure(let error): throw .setLevelFailed(error)
-            
         }
-        //vTaskDelay(100 / (1000 / UInt32(configTICK_RATE_HZ)))
     }
     
     func on() throws (GPIOOutput.Error){
-        try set(level: 1)
+        try set(true)
     }
     
     func off() throws(GPIOOutput.Error) {
-        try set(level: 0)
+        try set(false)
     }
 }

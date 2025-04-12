@@ -1,9 +1,3 @@
-//
-//  RGBColor.swift
-//  
-//
-//  Created by Łukasz Dziedzic on 10/04/2025.
-//
 
 enum ActiveChannel: String {
     case red
@@ -30,11 +24,6 @@ extension RGBColor {
         case .blue:  return RGBColor(red: 0,   green: 0,     blue: blue)
         }
     }
-    /* EXTREMELY FUNNY BUG - works only red Channel */
-//    var redChannel :  RGBColor { RGBColor(red: red, green: 0,     blue: 0   ) }
-//    var blueChannel:  RGBColor { RGBColor(red: 0,   green: green, blue: 0   ) }
-//    var greenChannel: RGBColor { RGBColor(red: 0,   green: 0,     blue: blue) }
-    
 }
 
 extension RGBColor {

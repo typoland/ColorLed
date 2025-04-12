@@ -1,11 +1,4 @@
-//
-//  Timer.swift
-//
-//
-//  Created by Łukasz Dziedzic on 07/04/2025.
-//
 
-//import CESP_IDF
 
 final class Timer {
     enum TimerError: Swift.Error {
@@ -32,11 +25,21 @@ final class Timer {
         
         var args = esp_timer_create_args_t(
             callback: { ptr in
-                if let box = ptr.map({ Unmanaged<CallbackBox>.fromOpaque($0).takeUnretainedValue() }) {
+                if let box = ptr.map({ 
+                    Unmanaged<CallbackBox>
+                    .fromOpaque($0)
+                    .takeUnretainedValue() }) 
+                {
                     box.callback()
                 }
             },
-            arg: UnsafeMutableRawPointer(Unmanaged.passUnretained(unmanaged.takeUnretainedValue()).toOpaque()),
+            arg: UnsafeMutableRawPointer(
+                Unmanaged
+                    .passUnretained(
+                        unmanaged
+                            .takeUnretainedValue())
+                    .toOpaque()
+            ),
             dispatch_method: ESP_TIMER_TASK,
             name: nameCString,
             skip_unhandled_events: false

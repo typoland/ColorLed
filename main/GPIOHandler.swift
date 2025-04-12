@@ -1,9 +1,4 @@
-//
-//  Interruption.swift
-//  
-//
-//  Created by Łukasz Dziedzic on 10/04/2025.
-//
+
 class GPIOHandler {
     let gpioNumber: Int32
     var handle: () -> Void
@@ -50,7 +45,9 @@ class GPIOHandler {
     
     let gpio_isr_handler: @convention(c) (UnsafeMutableRawPointer?) -> Void = { arg in
         guard let arg = arg else { return }
-        let handler = Unmanaged<GPIOHandler>.fromOpaque(arg).takeUnretainedValue()
+        let handler = Unmanaged<GPIOHandler>
+            .fromOpaque(arg)
+            .takeUnretainedValue()
         handler.run()
     }
     

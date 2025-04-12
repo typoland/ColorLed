@@ -1,6 +1,3 @@
-//
-//  Created by Łukasz Dziedzic on 05/04/2025.
-//
 
 
 struct ADConverter {

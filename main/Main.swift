@@ -2,11 +2,6 @@
 //
 // This source file is loosly based the Swift open source project
 //
-// Copyright (c) 2024 Apple Inc. and the Swift project authors.
-// Licensed under Apache License v2.0 with Runtime Library Exception
-//
-// See https://swift.org/LICENSE.txt for license information
-//
 //===----------------------------------------------------------------------===//
 
 
@@ -16,16 +11,16 @@ let buttonGPIO:   Int32 = 5
 var button:        GPIOHandler!
 
 var knob:          ADConverter!
-var knobTimer:     Timer!
 let knobChannel = ADC_CHANNEL_0 // GPIO1
 let knobTreshold: UInt64 = 2
+var knobTimer:     Timer!
 
-let ledRedGPIO:   Int32 = 10
-let ledGreenGPIO: Int32 = 12
-let ledBlueGPIO:  Int32 = 11
-var redLED:    GPIOOutput!// = try! .init(gpio: ledRedGPIO)
-var greenLED:  GPIOOutput!// = try! .init(gpio: ledGreenGPIO)
-var blueLED:   GPIOOutput!// = try! .init(gpio: ledBlueGPIO)
+let redLED_GPIO:   Int32 = 10
+let greenLED_GPIO: Int32 = 12
+let blueLED_GPIO:  Int32 = 11
+var redLED:    GPIOOutput!
+var greenLED:  GPIOOutput!
+var blueLED:   GPIOOutput!
 
 var colorLed: RGBLed!
 let rgbLedChannels = RGBLed.Channels(
@@ -65,6 +60,7 @@ func main() {
             }
         }
     }
+    
     var currentAction: Actions = .none {
         didSet { 
             switch currentAction {
@@ -81,8 +77,10 @@ func main() {
                 
             case .setActiveChannel(let channel) :
                 activeChannel = channel
+               
                 turnOnOneLed(on: activeChannel)
-                //                updateStrip()
+                //Too big job to update Strip?
+                //updateStrip()
             case .none:
                 break
             }
@@ -97,14 +95,13 @@ func main() {
     var currentColor: RGBColor = .init(red: 25, green: 30, blue: 5) 
 
     /* 3 color Leds */
-    
     do {
-        redLED =   try GPIOOutput(gpio: ledRedGPIO)
-        blueLED =  try GPIOOutput(gpio: ledBlueGPIO)
-        greenLED = try GPIOOutput(gpio: ledGreenGPIO)
+        redLED =   try GPIOOutput(gpio: redLED_GPIO)
+        blueLED =  try GPIOOutput(gpio: blueLED_GPIO)
+        greenLED = try GPIOOutput(gpio: greenLED_GPIO)
     } catch { fatalError("Leds initialization failed \(error)") }
     
-    /* ColorLed */ 
+    /* RGBLed */ 
     do { colorLed = try RGBLed(channels: rgbLedChannels) 
     } catch {  fatalError("Led initialization failed \(error)") }
     colorLed.setColor(currentColor)
