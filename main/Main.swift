@@ -1,6 +1,6 @@
 //===----------------------------------------------------------------------===//
 //
-// This source file is part of the Swift open source project
+// This source file is loosly based the Swift open source project
 //
 // Copyright (c) 2024 Apple Inc. and the Swift project authors.
 // Licensed under Apache License v2.0 with Runtime Library Exception
@@ -8,13 +8,6 @@
 // See https://swift.org/LICENSE.txt for license information
 //
 //===----------------------------------------------------------------------===//
-
-// The code will blink an LED on GPIO8. To change the pin, modify Led(gpioPin: 8)
-
-//var ledTimer: Timer?
-
-
-
 
 
 let rgbLedChannels = RGBLed.Channels(
@@ -38,6 +31,10 @@ let ledRedGPIO:   Int32 = 10
 let ledGreenGPIO: Int32 = 11
 let ledBlueGPIO:  Int32 = 12
 let knobChannel = ADC_CHANNEL_0 // GPIO1
+var ledStrip: LedStrip!
+let ledStripLength: UInt32 = 1
+let ledStripGPIO: Int32 = 8 // internal
+var ledTimer: Timer!
 
 @_cdecl("app_main")
 func main() {
@@ -50,29 +47,24 @@ func main() {
     
     
     
-    enum ActiveChannel: String {
-        case red
-        case green
-        case blue
-        var next: ActiveChannel {
-            switch self {
-            case .red: return .green
-            case .green: return .blue
-            case .blue: return .red
-            }
+    var activeChannel: ActiveChannel = .red {
+        didSet { 
+            turnOn(channel: activeChannel) 
         }
     }
-    
-    var activeChannel: ActiveChannel = .red {
-        didSet { turnOn(channel: activeChannel) }
+
+    var currentColor: RGBColor = .init(red: 25, green: 30, blue: 5) {
+        didSet { 
+            colorLed.setColor(currentColor) 
+            updateStrip()
+        }
     }
-    var currentColor: RGBColor = .init(red: 25, green: 30, blue: 5)
 
     /* Leds */
     
     do {
-        redOutput = try GPIOOutput(gpio: ledRedGPIO)
-        blueOutput = try GPIOOutput(gpio: ledBlueGPIO)
+        redOutput =   try GPIOOutput(gpio: ledRedGPIO)
+        blueOutput =  try GPIOOutput(gpio: ledBlueGPIO)
         greenOutput = try GPIOOutput(gpio: ledGreenGPIO)
     } catch { fatalError("Leds initialization failed \(error)") }
     
@@ -106,41 +98,51 @@ func main() {
                 switch activeChannel {
                 case .red: 
                     currentColor.red = value
+                    
                 case .green:
                     currentColor.green = value
                 case .blue:
                     currentColor.blue = value
                 }
-                colorLed.setColor(currentColor)
+                
             }
         }
     } catch {
         fatalError("Knob initialization failed: \(error)")
     }   
-    knobTimer.start(intervalMs: 50)
+    knobTimer.start(intervalMs: 5)
     
-    //print ("initialization complete")
     
-    //LED
-    /*
-     print ("start app")
-     let led = LedStrip(gpioPin: 8, maxLeds: 1)
+    /* LED Strip */
+    do {
+        ledStrip = try LedStrip(gpioNr: ledStripGPIO, 
+                                  maxLeds: ledStripLength)
+    } catch {
+        fatalError("LED Strip initialization failed: \(error)")
+    }
+    turnOn(channel: activeChannel) 
+     ledStrip.setPixel(index: 0, color: currentColor)
+    ledStrip.refresh()
      
-     */
     //LED Timer
     
-    //    do {
-    //        ledTimer = try Timer(name: "Led Timer") {
-    //            led.setPixel(index: 0,
-    //                         color: ledIsOn ? .lightWhite : .off)
-    //            led.refresh()
-    //            ledIsOn.toggle()  // Toggle the boolean value
-    //        }
-    //    } catch {
-    //        print ("Led strip initialization failed: \(error)")
-    //    }
-    //ledTimer?.start(intervalMs: 1511)
+//    do {
+//        ledTimer = try Timer(name: "Led Timer") {
+//            led.setPixel(index: 0,
+//                         color: ledIsOn ? .lightWhite : .off)
+//            led.refresh()
+//            ledIsOn.toggle()  // Toggle the boolean value
+//        }
+//    } catch {
+//        print ("Led strip initialization failed: \(error)")
+//    }
+//    ledTimer?.start(intervalMs: 1511)
     
+    func updateStrip() {
+        ledStrip.setPixel(index: 0, 
+                          color: currentColor.channel(activeChannel))
+        ledStrip.refresh()
+    }
     
     func turnOn(channel: ActiveChannel) {
         do  {
@@ -149,19 +151,23 @@ func main() {
                 try redOutput.on()
                 try greenOutput.off()
                 try blueOutput.off()
+                
             case .green:
                 try redOutput.off()
                 try greenOutput.on()
                 try blueOutput.off()
+                
             case .blue: 
                 try  redOutput.off()
                 try  greenOutput.off()
                 try  blueOutput.on()
+               
             }  
         } catch { fatalError("Error setting GPIO levels: \(error)") } 
     }
 }
 
+    
 public enum ESPError {
     case failure(String)
     case success

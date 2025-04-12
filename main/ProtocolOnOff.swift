@@ -6,7 +6,6 @@
 //
 
 protocol OnOff {
-    init(gpio: Int)
     func turnOn()
     func turnOff()
     func setPower(_ power: Bool)

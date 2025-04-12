@@ -10,45 +10,43 @@
 final class Timer {
     enum TimerError: Swift.Error {
         case failedToAllocateMemoryForCString
-        case failedToCreateTimer
+        case failedToCreateTimer(String)
         case timerHasNoHandle
     }
     private var handle: esp_timer_handle_t?
     private var nameCString: UnsafePointer<CChar>?
-    //private let timerCallback: (() -> Void)
     /// Create a periodic timer.
     /// - Parameters:
-    ///   - intervalMs: Timer interval in milliseconds
     ///   - name: Optional name for debug
     ///   - callback: Swift closure called on every tick
-    init(//intervalMs: UInt64,
-        name: String = "swift_timer",
-        callback: @escaping () -> Void) throws(Timer.TimerError) {
-            let unmanaged = Unmanaged.passRetained(CallbackBox(callback))
-            
-            guard let namePtr = name.withCString({ strdup($0).map { UnsafePointer<CChar>($0) } }) else {
-                throw(TimerError.failedToAllocateMemoryForCString)
-            }
-            self.nameCString = namePtr
-            var args = esp_timer_create_args_t(
-                callback: { ptr in
-                    if let box = ptr.map({ Unmanaged<CallbackBox>.fromOpaque($0).takeUnretainedValue() }) {
-                        box.callback()
-                    }
-                },
-                arg: UnsafeMutableRawPointer(Unmanaged.passUnretained(unmanaged.takeUnretainedValue()).toOpaque()),
-                dispatch_method: ESP_TIMER_TASK,
-                name: nameCString,
-                skip_unhandled_events: false
-            )
-            
-            guard esp_timer_create(&args, &handle) == ESP_OK
-            else { throw TimerError.failedToCreateTimer }
-            
-            //esp_timer_start_periodic(handle, intervalMs * 1000) // Convert ms to µs
-            
+    init(name: String = "swift_timer",
+         callback: @escaping () -> Void) 
+    throws (Timer.TimerError) {
+        
+        let unmanaged = Unmanaged.passRetained(CallbackBox(callback))
+        
+        guard let namePtr = name.withCString({ strdup($0).map { UnsafePointer<CChar>($0) } }) else {
+            throw(TimerError.failedToAllocateMemoryForCString)
         }
-    
+        self.nameCString = namePtr
+        
+        var args = esp_timer_create_args_t(
+            callback: { ptr in
+                if let box = ptr.map({ Unmanaged<CallbackBox>.fromOpaque($0).takeUnretainedValue() }) {
+                    box.callback()
+                }
+            },
+            arg: UnsafeMutableRawPointer(Unmanaged.passUnretained(unmanaged.takeUnretainedValue()).toOpaque()),
+            dispatch_method: ESP_TIMER_TASK,
+            name: nameCString,
+            skip_unhandled_events: false
+        )
+        
+        switch runEsp({esp_timer_create(&args, &handle)}) {
+            case .failure(let error): throw .failedToCreateTimer(error)
+            default: break
+        }
+    }
     
     func start(intervalMs: UInt64) {
         esp_timer_start_periodic(handle, intervalMs * 1000)  // convert ms to µs

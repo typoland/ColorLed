@@ -61,7 +61,7 @@ enable_language(Swift)
 target_sources(${COMPONENT_LIB}
     PRIVATE
     Main.swift
-    #LedStrip.swift
+    LedStrip.swift
     Timer.swift
     ADConverter.swift
     ProtocolOnOff.swift

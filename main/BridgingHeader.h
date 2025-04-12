@@ -1,13 +1,3 @@
-//===----------------------------------------------------------------------===//
-//
-// This source file is part of the Swift open source project
-//
-// Copyright (c) 2024 Apple Inc. and the Swift project authors.
-// Licensed under Apache License v2.0 with Runtime Library Exception
-//
-// See https://swift.org/LICENSE.txt for license information
-//
-//===----------------------------------------------------------------------===//
 
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +12,7 @@
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_continuous.h"
 #include "esp_pm.h"
-//#include "led_strip.h"
+#include "led_strip.h"
 /*
 // gpio_interrupt_bridge.h
 
