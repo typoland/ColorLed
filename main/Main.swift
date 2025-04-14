@@ -9,6 +9,8 @@
 
 let buttonGPIO:   Int32 = 5
 var button:        GPIOHandler!
+//var buttonWasPressed: Bool = false
+//var checkButtonTimer: Timer!
 
 var knob:          ADConverter!
 let knobChannel = ADC_CHANNEL_0 // GPIO1
@@ -80,7 +82,7 @@ func main() {
                
                 turnOnOneLed(on: activeChannel)
                 //Too big job to update Strip?
-                //updateStrip()
+                updateStrip()
             case .none:
                 break
             }
@@ -112,7 +114,16 @@ func main() {
         {  currentAction = .setActiveChannel(activeChannel.next) }
     } catch { fatalError("Button initialization failed \(error)") }
     
-    /* Knob */
+//    do { checkButtonTimer = try Timer(name: "Check Button Value") 
+//        { if buttonWasPressed {
+//            currentAction = .setActiveChannel(activeChannel.next)
+//            buttonWasPressed = false
+//        }
+//        }
+//    } catch {  fatalError("Button initialization failed: \(error)")  }
+//    
+    
+        /* Knob */
     do { knob = try ADConverter(channel: knobChannel) 
     } catch { fatalError("Knob initialization failed: \(error)") }
     
@@ -138,7 +149,6 @@ func main() {
     
     turnOnOneLed(on: activeChannel) 
     updateStrip()
-    
     knobTimer.start(intervalMs: 25) 
     //LED Timer
     

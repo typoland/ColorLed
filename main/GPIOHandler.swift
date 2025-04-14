@@ -2,15 +2,20 @@
 class GPIOHandler {
     let gpioNumber: Int32
     var handle: () -> Void
+    private var stateChanged: Bool = false
+    private var timer: Timer!
+//    private var checkStateInterval: UInt64
     
     enum Error: Swift.Error {
         case configFailed(String)
         case ISRServiceFailed(String)
         case ISRHandlerAddFailed(String)
+        case timerInitializationFailed(Timer.TimerError)
     }
     
     init(gpio: Int32, 
-         configuration: Config = .default, 
+         configuration: Config = .default,
+         checkStateInterval: UInt64 = 200, // ms
          handle: @escaping () -> Void) 
     throws(GPIOHandler.Error) 
     {
@@ -37,10 +42,23 @@ class GPIOHandler {
         case .success: break
         case .failure(let error): throw .ISRHandlerAddFailed(error)
         }
+        
+        // Create timer for bigger tasks
+        do { timer = try Timer(name: "Check GPIO\(gpioNumber) State") 
+            { 
+                if self.stateChanged {
+                    self.stateChanged = false
+                    handle()
+                }
+            }
+        } catch {  throw .timerInitializationFailed(error)  }
+        
+        timer.start(intervalMs: checkStateInterval)
     }
     
     deinit {
         gpio_isr_handler_remove(gpio_num_t(gpioNumber))
+        
     }
     
     let gpio_isr_handler: @convention(c) (UnsafeMutableRawPointer?) -> Void = { arg in
@@ -48,11 +66,11 @@ class GPIOHandler {
         let handler = Unmanaged<GPIOHandler>
             .fromOpaque(arg)
             .takeUnretainedValue()
-        handler.run()
+        handler.changeState()
     }
     
-    func run() {
-        handle()
+    func changeState() {
+        stateChanged = true
     }
     
     struct Config {
