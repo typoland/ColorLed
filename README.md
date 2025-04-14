@@ -11,10 +11,12 @@ Some research on embedded swift on esp32h2, based on available examples. Fun (so
 
 - ADCConverter - for knobs, needs some tweaks.
 
-- GPIOHandler - for buttons (I'm not sure).
+- GPIOHandler - for buttons. On/Off
 
 - RGBLed - pure rainbow available.
 
-## What not
+- LedStrip - onboard esp
 
-- LedStrip, because it disturb others.
+- Timer - for fire periodic events
+
+
