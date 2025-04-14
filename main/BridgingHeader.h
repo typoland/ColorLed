@@ -4,6 +4,8 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
+#include "freertos/semphr.h"
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 #include "driver/ledc.h"
@@ -13,6 +15,7 @@
 #include "esp_adc/adc_continuous.h"
 #include "esp_pm.h"
 #include "led_strip.h"
+
 /*
 // gpio_interrupt_bridge.h
 

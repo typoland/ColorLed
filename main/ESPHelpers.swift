@@ -1,7 +1,17 @@
 
-public enum ESPError {
+public enum ESPError: Equatable {
     case failure(String)
     case success
+    public static func == (lhs: ESPError, rhs: ESPError) -> Bool {
+        switch (lhs, rhs) {
+        case (.failure(let lhsMsg), .failure(let rhsMsg)):
+            return lhsMsg == rhsMsg
+        case (.success, .success):
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 func runEsp(_ command: () -> esp_err_t) -> ESPError {
